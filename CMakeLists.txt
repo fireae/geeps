@@ -1,0 +1,22 @@
+cmake_minimum_required(VERSION 2.8)
+project(geeps C CXX)
+
+find_package(CUDA)
+list(APPEND CUDA_NVCC_FLAGS "-Xcompiler -fPIC --shared -Iinclude -Isrc")
+cuda_include_directories(${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/include /home/wencc/workspace/bosen/third_party/include /usr/local/cuda/include)
+file(GLOB common_src "src/common/*.cpp")
+list(APPEND common_src "src/common/gpu-util/math_functions.cpp")
+file(GLOB client_src "src/client/*.cpp")
+file(GLOB server_src "src/server/*.cpp")
+
+file(GLOB common_gpu "src/common/*.cu")
+list(APPEND common_gpu "src/common/gpu-util/math_functions_cuda.cu")
+cuda_compile(cuda_targets ${common_gpu})
+include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR}/src)
+include_directories(/home/wencc/workspace/bosen/third_party/include /usr/local/cuda/include)
+link_directories(/home/wencc/workspace/bosen/third_party/lib /usr/local/cuda/lib64)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-sign-compare -fPIC")
+add_library(geeps SHARED ${common_src} ${client_src} ${server_src} ${cuda_targets})
+target_link_libraries(geeps stdc++ zmq boost_system boost_thread tbb boost_serialization glog gflags openblas cudart cublas)
